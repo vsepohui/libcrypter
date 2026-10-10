@@ -9,7 +9,10 @@ static char *embedding[] = { "", "-e", " \
 	use warnings;  \
 	sub ceil {my $n = shift; return int $n < $n ? int $n + 1 : $n } 	 \
 	sub _crypt_string { \
-	   my $str  = shift;  my $rnd = shift;  my $obfuscate = shift;\
+	   my $str  = shift; \
+	   my $rnd = shift; \
+	   my $obfuscate = shift;\
+	   my $uncrypt = shift // 0; \
 	   my $n = 0;\
 	   my @random = @{$rnd}; my @input = split //, $str;  my $out = ''; \
 		for (my $i = 0 ; $i < scalar @input ; $i ++) {\
@@ -19,7 +22,18 @@ static char *embedding[] = { "", "-e", " \
 			\
 			if ($obfuscate) {\
 				my $nr = $r->rand($obfuscate);\
-				$out .= chr $r->rand(256) for 1..$nr;\
+				for (1..$nr) {\
+					if ($uncrypt) {\
+						$r->rand(256);\
+					} else {\
+						$out .= chr $r->rand(256);\
+					}\
+				}\
+				if ($uncrypt) {\
+					$i += $nr;\
+					$chr = $input[$i];\
+					$ord = ord $chr;\
+				}\
 			}\
 			  $ord ^= $_->rand(256) for @random; \
 			  $out .= chr $ord;  \
@@ -42,31 +56,12 @@ static char *embedding[] = { "", "-e", " \
 		}\
 		return $random;  \
 	}  \
-	sub crypt { my ($input, $password, $obfuscate) = @_; my $random  = _init_random_by_password($password); my $r = _crypt_string($input, $random, $obfuscate);  return $r;}   \
+	sub crypt { my ($input, $password, $obfuscate) = @_; my $random  = _init_random_by_password($password); return _crypt_string($input, $random, $obfuscate);}\
 \
 	sub uncrypt { \
-		 my ($input, $password, $obfuscate) = @_;\
+		my ($input, $password, $obfuscate) = @_;\
 		my $random  = _init_random_by_password($password);\
-		my $n = 0;\
-		\
-		my @input = split //, $input; \
-		my $out = ''; \
-		for (my $i = 0 ; $i < scalar @input ; $i ++) {\
-			my $chr = $input[$i];\
-			my $ord = ord $chr;\
-			my $r = $random->[$n];\
-			$n = 0 if (++$n >= scalar @$random); \
-			if ($obfuscate) { \
-				my $nr = $r->rand($obfuscate);\
-					$r->rand(256) for 1..$nr; \
-					$i += $nr;\
-					$chr = $input[$i];\
-					$ord = ord $chr;\
-			}\
-			$ord ^= $_->rand(256) for @$random; \
-			$out .= chr $ord;\
-		}\
-		return $out;\
+		return _crypt_string($input, $random, $obfuscate, 1);\
 	}\
 \
 \
