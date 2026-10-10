@@ -18,10 +18,10 @@ struct result crypter (char *input, unsigned input_length, char *password, unsig
 		use 5.022; \
 		use warnings;  \
 		sub ceil {my $n = shift; return int $n < $n ? int $n + 1 : $n } 	 \
-		sub _crypt_string {    my $str  = shift;  my $rnd = shift; my $n = shift; my @random = @$rnd;  my @input = split //, $str;   my $out = '';  for (my $i = 0 ; $i < scalar @input ; $i ++) {  my $chr = $input[$i];  my $ord = ord $chr;    my $r = $random[$n];  $n = 0 if (++$n >= scalar @random);   for my $r (@random) {  my $s = $r->{generator}->rand(256);  $ord ^= $s;  }    $out .= chr $ord;  }    return $out;  }\
+		sub _crypt_string {    my $str  = shift;  my $rnd = shift; my $n = shift;  my @random = @{$rnd}; warn $random[1]->{seed}; my @input = split //, $str;  my $out = '';  for (my $i = 0 ; $i < scalar @input ; $i ++) {  my $chr = $input[$i];  my $ord = ord $chr;    my $r = $random[$n];  $n = 0 if (++$n >= scalar @random);   for my $r (@random) {  my $s = $r->{generator}->rand(256);  $ord ^= $s;  }    $out .= chr $ord;  }    return $out;  }\
 		\
-		sub _init_random_by_password {  my $password = shift;  my @random = ();    for (1..ceil(length($password)/4)) {  my $p = substr($password, 4*$_-4, 4);  $p .= ' 'x (4 - length $p) if (length $p < 4);     my $x = sprintf(\"%.49f\", unpack('f', $p));  $x = $x ? 1 / $x : 0;   my $rnd = new Strong::Random($x);  $rnd->rand();    $rnd->rand for 1..unpack('s', $p) % 256;    my $seed = sprintf(\"%.8f\", $rnd->{seed});    push @random, {  generator  => new Strong::Random($seed),  seed => $seed,  };  }   return @random;  }  \
-		sub crypt { my ($input, $password) = @_; my @random  = _init_random_by_password($password);  return _crypt_string($input, \@random, 0); }   \
+		sub _init_random_by_password {  my $password = shift;  my $random = [];    for (1..ceil(length($password)/4)) {  my $p = substr($password, 4*$_-4, 4);  $p .= ' 'x (4 - length $p) if (length $p < 4);     my $x = sprintf(\"%.49f\", unpack('f', $p));  $x = $x ? 1 / $x : 0;   my $rnd = new Strong::Random($x);  $rnd->rand();    $rnd->rand for 1..unpack('s', $p) % 256;    my $seed = sprintf(\"%.8f\", $rnd->{seed});    push @{$random}, {  generator  => new Strong::Random($seed),  seed => $seed,  };  }   return $random;  }  \
+		sub crypter { my ($input, $password) = @_; my $random  = _init_random_by_password($password); return _crypt_string($input, $random, 0);}   \
 \
  \
  \
@@ -47,10 +47,16 @@ struct result crypter (char *input, unsigned input_length, char *password, unsig
         PUTBACK;
 
     /** Вызов Perl-подпрограммы PrintUID **/
-    call_pv("crypt", G_SCALAR);
+    call_pv("crypter", G_SCALAR);
+    SPAGAIN;
     
-       printf("%s", POPs); 
+    STRLEN len;
+	SV *sv = POPs;
+	const char *s = SvPV(sv, len);
     
+       printf("%s\n", s); 
+    
+        PUTBACK;
         FREETMPS;
         LEAVE;    
 
