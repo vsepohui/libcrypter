@@ -5,15 +5,10 @@
 
 
 void main (int argc, char *argv[]) {
-    char *input;
-    char *password; 
-    char *obfuscate;
-    
-    if (argc != 4) {
-		return;
-	}
-    
-    
+    char *input, *password, *obfuscate;
+   
+    if (argc != 4) return;
+
 	input = argv[1];	
 	password = argv[2];
 	obfuscate = argv[3];
