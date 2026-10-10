@@ -18,19 +18,30 @@ static char *embedding[] = { "", "-e", " \
 			$n = 0 if (++$n >= scalar @random);\
 			\
 			if ($obfuscate) {\
-				my $nr = $r->{generator}->rand($obfuscate);\
-				for (1..$nr) {\
-					$out .= chr $r->{generator}->rand(256);\
-				}\
+				my $nr = $r->rand($obfuscate);\
+				$out .= chr $r->rand(256) for 1..$nr;\
 			}\
-			  for my $r (@random) {  \
-				my $s = $r->{generator}->rand(256);  \
-			  $ord ^= $s;  }    $out .= chr $ord;  \
+			  $ord ^= $_->rand(256) for @random; \
+			  $out .= chr $ord;  \
 		}   \
 		return $out;\
 	}\
 	\
-	sub _init_random_by_password {  my $password = shift;  my $random = [];    for (1..ceil(length($password)/4)) {  my $p = substr($password, 4*$_-4, 4);  $p .= ' 'x (4 - length $p) if (length $p < 4);     my $x = sprintf(\"%.49f\", unpack('f', $p));  $x = $x ? 1 / $x : 0;   my $rnd = new Strong::Random($x);  $rnd->rand();    $rnd->rand for 1..unpack('s', $p) % 256;    my $seed = sprintf(\"%.8f\", $rnd->{seed});  push @{$random}, {  generator  => new Strong::Random($seed),  seed => $seed,  };  }   return $random;  }  \
+	sub _init_random_by_password {  \
+		my $password = shift;  my $random = [];   \
+		 for (1..ceil(length($password)/4)) {  \
+			my $p = substr($password, 4*$_-4, 4);  \
+			$p .= ' 'x (4 - length $p) if (length $p < 4);\
+			my $x = sprintf(\"%.49f\", unpack('f', $p)); \
+			$x = $x ? 1 / $x : 0;\
+			my $rnd = new Strong::Random($x);\
+			$rnd->rand();\
+			$rnd->rand for 1..unpack('s', $p) % 256;\
+			my $seed = sprintf(\"%.8f\", $rnd->{seed});\
+			push @{$random}, new Strong::Random($seed);\
+		}\
+		return $random;  \
+	}  \
 	sub crypt { my ($input, $password, $obfuscate) = @_; my $random  = _init_random_by_password($password); my $r = _crypt_string($input, $random, $obfuscate);  return $r;}   \
 \
 	sub uncrypt { \
@@ -46,12 +57,13 @@ static char *embedding[] = { "", "-e", " \
 			my $r = $random->[$n];\
 			$n = 0 if (++$n >= scalar @$random); \
 			if ($obfuscate) { \
-				my $nr = $r->{generator}->rand($obfuscate);\
-					for (1..$nr) { $r->{generator}->rand(256);	$i ++; } \
+				my $nr = $r->rand($obfuscate);\
+					$r->rand(256) for 1..$nr; \
+					$i += $nr;\
 					$chr = $input[$i];\
 					$ord = ord $chr;\
 			}\
-			for my $r (@$random) {my $s = $r->{generator}->rand(256);$ord ^= $s;} \
+			$ord ^= $_->rand(256) for @$random; \
 			$out .= chr $ord;\
 		}\
 		return $out;\
