@@ -3,6 +3,7 @@ struct crypter_result {
 	int size;
 };
 
-struct crypter_result crypter (char *input, unsigned input_length, char *password, unsigned password_length);
+
+struct crypter_result crypter (char *input, unsigned input_length, char *password, unsigned password_length, unsigned obfuscate);
 
 
