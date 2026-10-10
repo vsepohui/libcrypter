@@ -17,11 +17,11 @@ struct crypter_result crypter (char *input, unsigned input_length, char *passwor
 		use warnings;  \
 		sub ceil {my $n = shift; return int $n < $n ? int $n + 1 : $n } 	 \
 		sub _crypt_string { \
-		   my $str  = shift;  my $rnd = shift; my $n = 0;  my @random = @{$rnd}; my @input = split //, $str;  my $out = ''; \
+		   my $str  = shift;  my $rnd = shift;  my @random = @{$rnd}; my @input = split //, $str;  my $out = ''; \
 		    for (my $i = 0 ; $i < scalar @input ; $i ++) {\
-				my $chr = $input[$i];  my $ord = ord $chr;    my $r = $random[$n]; \
-				 $n = 0 if (++$n >= scalar @random);  \
-				  for my $r (@random) {  my $s = $r->{generator}->rand(256);  \
+				my $chr = $input[$i];  my $ord = ord $chr;\
+				  for my $r (@random) {  \
+					my $s = $r->{generator}->rand(256);  \
 				  $ord ^= $s;  }    $out .= chr $ord;  \
 			}   \
 			return $out;\
