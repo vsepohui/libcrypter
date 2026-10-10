@@ -35,7 +35,7 @@ struct result crypter (char *input, unsigned input_length, char *password, unsig
 		}\
 		\
 		sub _init_random_by_password {  my $password = shift;  my $random = [];    for (1..ceil(length($password)/4)) {  my $p = substr($password, 4*$_-4, 4);  $p .= ' 'x (4 - length $p) if (length $p < 4);     my $x = sprintf(\"%.49f\", unpack('f', $p));  $x = $x ? 1 / $x : 0;   my $rnd = new Strong::Random($x);  $rnd->rand();    $rnd->rand for 1..unpack('s', $p) % 256;    my $seed = sprintf(\"%.8f\", $rnd->{seed});  push @{$random}, {  generator  => new Strong::Random($seed),  seed => $seed,  };  }   return $random;  }  \
-		sub crypter { my ($input, $password) = @_; my $random  = _init_random_by_password($password); my $r = _crypt_string($input, $random);  return $r;}   \
+		sub crypt { my ($input, $password) = @_; my $random  = _init_random_by_password($password); my $r = _crypt_string($input, $random);  return $r;}   \
 \
  \
  \
@@ -65,7 +65,7 @@ struct result crypter (char *input, unsigned input_length, char *password, unsig
         PUTBACK;
 
     /** Вызов Perl-подпрограммы PrintUID **/
-    call_pv("crypter", G_SCALAR);
+    call_pv("crypt", G_SCALAR);
     SPAGAIN;
     
     STRLEN len;
