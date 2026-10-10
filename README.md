@@ -25,7 +25,7 @@ gcc -o demo demo.c crypter.c $(perl -MExtUtils::Embed -e ccopts -e ldopts)
 Run 
 
 ```
-./demo Hello 123456
+./demo Text Password 100
 ```
 
 # Code
