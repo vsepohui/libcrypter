@@ -14,8 +14,16 @@ void main (int argc, char *argv[]) {
 	obfuscate = argv[3];
 
 	struct crypter_result r = crypter(input, strlen(input), password, strlen(password), atoi(obfuscate));
+	
+	struct crypter_result r2 = uncrypter(r.string, r.size, password, strlen(password), atoi(obfuscate));
 
-	for (int i = 0 ; i < r.size ; i ++) {
-		fputc(r.string[i], stdout);
+	//for (int i = 0 ; i < r.size ; i ++) {
+		//fputc(r.string[i], stdout);
+	//}
+	
+	
+	for (int i = 0 ; i < r2.size ; i ++) {
+		fputc(r2.string[i], stdout);
 	}
+
 }
