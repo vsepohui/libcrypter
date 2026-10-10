@@ -81,102 +81,61 @@ static char *embedding[] = { "", "-e", " \
 	\
 	" };
 
-
-struct crypter_result crypter (char *input, unsigned input_length, char *password, unsigned password_length, unsigned obfuscate) {
+struct crypter_result _crypter_call_perl (char * perl_method, char *input, unsigned input_length, char *password, unsigned password_length, unsigned obfuscate) {
 	int argc = 0;
+	
 	char **argv;
 	char **env;
-    my_perl = perl_alloc();
-    perl_construct(my_perl);
+	my_perl = perl_alloc();
+	perl_construct(my_perl);
 
 
-    perl_parse(my_perl, NULL, 3, embedding, NULL);
-    perl_run(my_perl);
+	perl_parse(my_perl, NULL, 3, embedding, NULL);
+	perl_run(my_perl);
 
-
-        dSP;
+	dSP;
 
 	ENTER;
-        SAVETMPS;
+	SAVETMPS;
 
-        PUSHMARK(SP);
-        EXTEND(SP, 2);
-        PUSHs(sv_2mortal(newSVpv(input, input_length)));
-        PUSHs(sv_2mortal(newSVpv(password, password_length)));
-        PUSHs(sv_2mortal(newSViv(obfuscate)));
-        PUTBACK;
+	PUSHMARK(SP);
+	EXTEND(SP, 2);
+	PUSHs(sv_2mortal(newSVpv(input, input_length)));
+	PUSHs(sv_2mortal(newSVpv(password, password_length)));
+	PUSHs(sv_2mortal(newSViv(obfuscate)));
+	PUTBACK;
 
-    /** Вызов Perl-подпрограммы PrintUID **/
-    call_pv("crypt", G_SCALAR);
-    SPAGAIN;
-    
-    STRLEN len;
+	// Call Perl method
+	call_pv(perl_method, G_SCALAR); 
+	SPAGAIN;
+
+	STRLEN len;
 	SV *sv = POPs;
 	char *s = SvPVx(sv, len);
-	
+
 	struct crypter_result r;
 	r.string = malloc(sizeof(char)*len);
 	memcpy(r.string, s, sizeof(char)*len);
 	r.size = len;
-	    
-        PUTBACK;
-        FREETMPS;
-        LEAVE;    
 
-    perl_destruct(my_perl);
-    perl_free(my_perl);
-    //PERL_SYS_TERM();
-    
-    return r;
+	PUTBACK;
+	FREETMPS;
+	LEAVE;    
+
+	perl_destruct(my_perl);
+	perl_free(my_perl);
+	//PERL_SYS_TERM();
+
+	return r;
+}
+
+struct crypter_result crypter (char *input, unsigned input_length, char *password, unsigned password_length, unsigned obfuscate) {
+	return _crypter_call_perl("crypt", input, input_length, password, password_length, obfuscate);
 }
 
 
 struct crypter_result uncrypter (char *input, unsigned input_length, char *password, unsigned password_length, unsigned obfuscate) {
-	int argc = 0;
-	char **argv;
-	char **env;
-    my_perl = perl_alloc();
-    perl_construct(my_perl);
-
-
-    perl_parse(my_perl, NULL, 3, embedding, NULL);
-    perl_run(my_perl);
-
-
-        dSP;
-
-	ENTER;
-        SAVETMPS;
-
-        PUSHMARK(SP);
-        EXTEND(SP, 2);
-        PUSHs(sv_2mortal(newSVpv(input, input_length)));
-        PUSHs(sv_2mortal(newSVpv(password, password_length)));
-        PUSHs(sv_2mortal(newSViv(obfuscate)));
-        PUTBACK;
-
-    /** Вызов Perl-подпрограммы PrintUID **/
-    call_pv("uncrypt", G_SCALAR);
-    SPAGAIN;
-    
-    STRLEN len;
-	SV *sv = POPs;
-	char *s = SvPVx(sv, len);
-	
-	struct crypter_result r;
-	r.string = malloc(sizeof(char)*len);
-	memcpy(r.string, s, sizeof(char)*len);
-	r.size = len;
-	    
-        PUTBACK;
-        FREETMPS;
-        LEAVE;    
-
-    perl_destruct(my_perl);
-    perl_free(my_perl);
-    //PERL_SYS_TERM();
-    
-    return r;
+	return _crypter_call_perl("uncrypt", input, input_length, password, password_length, obfuscate);
 }
 
 
